@@ -19,6 +19,7 @@ namespace SfChartTrackball
         public SolidColorBrush tooltipforcolorbrush = new SolidColorBrush(Colors.Blue);
         public ToolTip lockedcursortooltip = new ToolTip();
         private double xValue, yValue;
+        private bool islocked = false;
 
 
 
@@ -32,7 +33,7 @@ namespace SfChartTrackball
             }
             set
             {
-                if(value != null) 
+                if (value != null)
                 {
                     area = value;
                     area.MouseRightButtonDown += OnMouseRightButtonDown; //Unlock the track ball
@@ -116,152 +117,145 @@ namespace SfChartTrackball
 
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {
-            if (eventsActive)
+            //if (eventsActive)
+            //{
+            //    try
+            //    {
+            //        SfChart chart = e.Source as SfChart;
+            //        if (isReleased)
+            //        {
+            //            isReleased = false;
+            //            IsActivated = true;
+
+
+
+            //            GlobalFunctions.ShowTooltip(ref lockedcursortooltip, true, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
+            //        }
+
+            //        if (isReleased == false)
+            //        {
+            //            isReleased = true;
+            //            IsActivated = true;
+            //            //base.OnMouseMove(e);
+            //            //Stores the point value to relock the track ball in another position.
+            //            var point = new Point
+            //            {
+            //                X = e.GetPosition(this.AdorningCanvas).X - Area.SeriesClipRect.Left,
+            //                Y = e.GetPosition(this.AdorningCanvas).Y - Area.SeriesClipRect.Top
+            //            };
+            //            xValue = Area.PointToValue(Area.PrimaryAxis, point);
+            //            yValue = Area.PointToValue(Area.SecondaryAxis, point);
+            //            isReleased = false;
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        //NWSLogger.Logger.Error("Error in OnMouseLeftButtonDown: ", ex);
+            //    }
+            //}
+            var chart = Area = e.Source as SfChart;
+            ViewModel vm = (ViewModel)chart.DataContext;
+
+            islocked = !islocked;
+            
+            // To get store the pointer value before locking the track ball
+            var point = new Point
             {
-                try
+                X = e.GetPosition(this.AdorningCanvas).X - Area.SeriesClipRect.Left,
+                Y = e.GetPosition(this.AdorningCanvas).Y - Area.SeriesClipRect.Top
+            };
+
+            xValue = Area.PointToValue(Area.PrimaryAxis, point);
+            yValue = Area.PointToValue(Area.SecondaryAxis, point);
+
+            if (islocked)
+            {
+                foreach (var annotation in chart.Annotations)
                 {
-                    SfChart chart = e.Source as SfChart;
-                    if (isReleased)
+                    annotation.Visibility = Visibility.Visible;
+                    vm.AnnotationX = Math.Round(xValue);
+                    if (annotation is TextAnnotation)
                     {
-                        isReleased = false;
-                        IsActivated = true;
-
-
-
-                        GlobalFunctions.ShowTooltip(ref lockedcursortooltip, true, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
+                        vm.AnnotationTxt = "" + Math.Round(xValue);
                     }
-
-                    if (isReleased == false)
-                    {
-                        isReleased = true;
-                        IsActivated = true;
-                        //base.OnMouseMove(e);
-                        //Stores the point value to relock the track ball in another position.
-                        var point = new Point
-                        {
-                            X = e.GetPosition(this.AdorningCanvas).X - Area.SeriesClipRect.Left,
-                            Y = e.GetPosition(this.AdorningCanvas).Y - Area.SeriesClipRect.Top
-                        };
-                        xValue = Area.PointToValue(Area.PrimaryAxis, point);
-                        yValue = Area.PointToValue(Area.SecondaryAxis, point);
-                        isReleased = false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    //NWSLogger.Logger.Error("Error in OnMouseLeftButtonDown: ", ex);
                 }
             }
-        }
-
-        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
-        {
-            if (eventsActive)
+            else
             {
-                try
+                foreach (var annotation in chart.Annotations)
                 {
-                    IsActivated = true;
-                    isReleased = false;
-                    // Update the trackball when locking the track ball at another position.
-                    UpdatePosition();
+                    annotation.Visibility = Visibility.Collapsed;
                 }
-                catch (Exception ex)
-                {
-                    //NWSLogger.Logger.Error("Error in OnMouseLeftButtonUp: ", ex);
-                }
+                GlobalFunctions.ShowTooltip(ref lockedcursortooltip, false, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
             }
         }
-
-
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
             var chart = Area = e.Source as SfChart;
-            if (eventsActive)
+            // To get store the pointer value before locking the track ball
+            var point = new Point
             {
-                try
-                {
-                    if (isReleased)
-                    {
-                        // To get store the pointer value before locking the track ball
-                        var point = new Point
-                        {
-                            X = e.GetPosition(this.AdorningCanvas).X - Area.SeriesClipRect.Left,
-                            Y = e.GetPosition(this.AdorningCanvas).Y - Area.SeriesClipRect.Top
-                        };
-                        if (ChartArea.SeriesClipRect.Contains(point)) // Move the track ball only when cursor is within the Chart area.
-                        {
-                            xValue = Area.PointToValue(Area.PrimaryAxis, point);
-                            yValue = Area.PointToValue(Area.SecondaryAxis, point);
-                            base.OnMouseMove(e);
-                            IsActivated = true;
+                X = e.GetPosition(this.AdorningCanvas).X - Area.SeriesClipRect.Left,
+                Y = e.GetPosition(this.AdorningCanvas).Y - Area.SeriesClipRect.Top
+            };
 
-                            GlobalFunctions.ShowTooltip(ref lockedcursortooltip, false, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
-                        }
-                        else
-                        {
-                            // Locks the trackball when the mouse move is outside the ChartArea
-                            UpdatePosition();
-                            GlobalFunctions.ShowTooltip(ref lockedcursortooltip, true, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
-                        }
-                    }
-                    else
-                    {
-                        //Updates the track ball during Mousemove to the place where it is locked.
-                        UpdatePosition();
-                        GlobalFunctions.ShowTooltip(ref lockedcursortooltip, true, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
-                    }
-                }
-                catch (Exception ex)
+            if (ChartArea.SeriesClipRect.Contains(point)) // Move the track ball only when cursor is within the Chart area.
+            {
+                if (islocked)
                 {
-                    //NWSLogger.Logger.Error("Error in OnMouseMove: ", ex);
+                    GlobalFunctions.ShowTooltip(ref lockedcursortooltip, true, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
+                }
+                else
+                {
+                    base.OnMouseMove(e);
                 }
             }
         }
 
-        protected override void OnMouseLeave(MouseEventArgs e)
-        {
-            if (eventsActive)
-            {
-                try
-                {
-                    if (!isReleased)
-                        IsActivated = true;
-                    SfChart chart = e.Source as SfChart;
-                    GlobalFunctions.ShowTooltip(ref lockedcursortooltip, false, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
-                }
-                catch (Exception ex)
-                {
-                    //NWSLogger.Logger.Error("Error in OnMouseLeave: ", ex);
-                }
-            }
-        }
+        //protected override void OnMouseLeave(MouseEventArgs e)
+        //{
+        //    if (eventsActive)
+        //    {
+        //        try
+        //        {
+        //            if (!isReleased)
+        //                IsActivated = true;
+        //            SfChart chart = e.Source as SfChart;
+        //            GlobalFunctions.ShowTooltip(ref lockedcursortooltip, false, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            //NWSLogger.Logger.Error("Error in OnMouseLeave: ", ex);
+        //        }
+        //    }
+        //}
 
 
-        protected override void OnMouseEnter(MouseEventArgs e)
-        {
-            if (eventsActive)
-            {
-                try
-                {
+        //protected override void OnMouseEnter(MouseEventArgs e)
+        //{
+        //    if (eventsActive)
+        //    {
+        //        try
+        //        {
 
-                    SfChart chart = e.Source as SfChart;
-                    GlobalFunctions.ShowTooltip(ref lockedcursortooltip, false, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
-                }
-                catch (Exception ex)
-                {
-                    //NWSLogger.Logger.Error("Error in OnMouseLeave: ", ex);
-                }
-            }
-        }
+        //            SfChart chart = e.Source as SfChart;
+        //            GlobalFunctions.ShowTooltip(ref lockedcursortooltip, false, ref chart, ref tooltipbgcolorbrush, ref tooltipforcolorbrush, Constants.TXTCURSORLOCKED);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            //NWSLogger.Logger.Error("Error in OnMouseLeave: ", ex);
+        //        }
+        //    }
+        //}
 
         // Method to Update the trackball position in SfTrackballBehavior.
-        private void UpdatePosition()
-        {
-            double xPoint = Area.ValueToPoint(Area.PrimaryAxis, xValue);
-            double yPoint = Area.ValueToPoint(Area.SecondaryAxis, yValue);
-            OnPointerPositionChanged(new Point(xPoint, yPoint));
-        }
+        //private void UpdatePosition()
+        //{
+        //    double xPoint = Area.ValueToPoint(Area.PrimaryAxis, xValue);
+        //    double yPoint = Area.ValueToPoint(Area.SecondaryAxis, yValue);
+        //    OnPointerPositionChanged(new Point(xPoint, yPoint));
+        //}
     }
 
     internal class Constants
