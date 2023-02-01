@@ -33,6 +33,17 @@
             <Setter Property="StrokeThickness"
                     Value="1" />
         </Style>
+        <DataTemplate x:Key="ScatterTrackBall">
+            <StackPanel>
+                <TextBlock Text="{Binding ValueX,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+                           Visibility="Hidden"
+                           Initialized="TextBlock_Initialized" />
+                <TextBlock Text="{Binding ValueY}"
+                           Margin="5"
+                           Background="Gray"/>
+            </StackPanel>
+
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <syncfusion:SfChart>
@@ -52,9 +63,14 @@
                 <syncfusion:NumericalAxis EnableScrollBar="True"></syncfusion:NumericalAxis>
             </syncfusion:SfChart.PrimaryAxis>
             <syncfusion:SfChart.SecondaryAxis>
-                <syncfusion:NumericalAxis Maximum="10" Minimum="0"></syncfusion:NumericalAxis>
+                <syncfusion:NumericalAxis Maximum="40" Minimum="0"></syncfusion:NumericalAxis>
             </syncfusion:SfChart.SecondaryAxis>
-            <syncfusion:FastLineBitmapSeries ItemsSource="{Binding ChartData}" XBindingPath="XValue" YBindingPath="YValue"></syncfusion:FastLineBitmapSeries>
+            <syncfusion:FastScatterBitmapSeries ItemsSource="{Binding ChartData}" 
+                                                XBindingPath="XValue" 
+                                                YBindingPath="YValue" 
+                                                TrackBallLabelTemplate="{StaticResource ScatterTrackBall}"
+                                                ScatterHeight="10"
+                                                ScatterWidth="10"></syncfusion:FastScatterBitmapSeries>
         </syncfusion:SfChart>
     </Grid>
 </Window>

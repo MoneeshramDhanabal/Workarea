@@ -26,6 +26,11 @@ namespace SfChartTrackball
             InitializeComponent();
             DataContext = new ViewModel();
         }
+
+        private void TextBlock_Initialized(object sender, EventArgs e)
+        {
+            Console.WriteLine(DateTime.Now.Millisecond + " X Value Ini : " + ((TextBlock)sender).Text);
+        }
     }
 
     public class ViewModel
@@ -41,7 +46,7 @@ namespace SfChartTrackball
         public ViewModel()
         {
             var vTemp = new ObservableCollection<DataPoint>();
-            for (var i = 1; i < 15; i++)
+              for (var i = 1; i < 150; i++)
             {
                 vTemp.Add(new DataPoint { XValue = i, YValue = 5 + i*0.1 });
             }
